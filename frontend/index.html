@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outlook 邮件管理系统</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Page -->
+        <div id="login-page" class="page">
+            <div class="login-container">
+                <h1>Outlook 邮件管理</h1>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">登录</button>
+                    <div id="login-error" class="error-message"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="main-app" class="page hidden">
+            <!-- Header -->
+            <header class="header">
+                <h1>Outlook 邮件管理</h1>
+                <div class="header-actions">
+                    <span id="current-user"></span>
+                    <button id="logout-btn" class="btn btn-secondary">退出</button>
+                </div>
+            </header>
+
+            <!-- Navigation -->
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="accounts">账号管理</button>
+                <button class="tab-btn" data-tab="mail">邮件查看</button>
+            </nav>
+
+            <!-- Accounts Tab -->
+            <div id="accounts-tab" class="tab-content active">
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <div class="toolbar-left">
+                        <input type="text" id="account-search" placeholder="搜索邮箱..." class="search-input">
+                        <select id="group-filter" class="select-input">
+                            <option value="">全部分组</option>
+                        </select>
+                        <select id="status-filter" class="select-input">
+                            <option value="">全部状态</option>
+                            <option value="active">有效</option>
+                            <option value="invalid">失效</option>
+                            <option value="unknown">未知</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-right">
+                        <button id="add-account-btn" class="btn btn-primary">添加账号</button>
+                        <button id="batch-import-btn" class="btn btn-secondary">批量导入</button>
+                        <button id="batch-verify-btn" class="btn btn-secondary">批量测活</button>
+                        <button id="export-btn" class="btn btn-secondary">导出</button>
+                        <button id="manage-groups-btn" class="btn btn-secondary">分组管理</button>
+                    </div>
+                </div>
+
+                <!-- Accounts Table -->
+                <div class="table-container">
+                    <table id="accounts-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all"></th>
+                                <th>邮箱</th>
+                                <th>Client ID</th>
+                                <th>分组</th>
+                                <th>状态</th>
+                                <th>最后验证</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="accounts-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Batch Actions -->
+                <div id="batch-actions" class="batch-actions hidden">
+                    <span id="selected-count">已选择 0 项</span>
+                    <button id="batch-delete-btn" class="btn btn-danger">批量删除</button>
+                </div>
+            </div>
+
+            <!-- Mail Tab -->
+            <div id="mail-tab" class="tab-content hidden">
+                <div class="mail-layout">
+                    <!-- Account Selector -->
+                    <div class="mail-sidebar">
+                        <h3>选择账号</h3>
+                        <select id="mail-account-select" class="select-input">
+                            <option value="">请选择账号</option>
+                        </select>
+
+                        <h3>文件夹</h3>
+                        <ul id="folder-list" class="folder-list"></ul>
+                    </div>
+
+                    <!-- Mail List -->
+                    <div class="mail-main">
+                        <div class="mail-toolbar">
+                            <input type="text" id="mail-search" placeholder="搜索邮件..." class="search-input">
+                            <button id="refresh-mail-btn" class="btn btn-secondary">刷新</button>
+                        </div>
+                        <div id="mail-list" class="mail-list"></div>
+                        <div id="mail-pagination" class="pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <!-- Add Account Modal -->
+        <div id="add-account-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>添加账号</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="add-account-form">
+                    <div class="form-group">
+                        <label for="acc-email">邮箱</label>
+                        <input type="email" id="acc-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-password">密码 (可选)</label>
+                        <input type="text" id="acc-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-refresh-token">Refresh Token</label>
+                        <textarea id="acc-refresh-token" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-client-id">Client ID</label>
+                        <input type="text" id="acc-client-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-group">分组</label>
+                        <select id="acc-group" class="select-input"></select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-btn">取消</button>
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Batch Import Modal -->
+        <div id="batch-import-modal" class="modal hidden">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>批量导入</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="batch-import-form">
+                    <div class="form-group">
+                        <label>格式: 邮箱----密码----refresh_token----client_id</label>
+                        <textarea id="import-data" rows="10" placeholder="每行一个账号..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="import-group">导入到分组</label>
+                        <select id="import-group" class="select-input"></select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-btn">取消</button>
+                        <button type="submit" class="btn btn-primary">导入</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Account Modal -->
+        <div id="edit-account-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>编辑账号</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="edit-account-form">
+                    <input type="hidden" id="edit-acc-id">
+                    <div class="form-group">
+                        <label for="edit-acc-email">邮箱</label>
+                        <input type="email" id="edit-acc-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-acc-password">密码</label>
+                        <input type="text" id="edit-acc-password" placeholder="留空不修改">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-acc-refresh-token">Refresh Token</label>
+                        <textarea id="edit-acc-refresh-token" rows="3" placeholder="留空不修改"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-acc-client-id">Client ID</label>
+                        <input type="text" id="edit-acc-client-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-acc-group">分组</label>
+                        <select id="edit-acc-group" class="select-input"></select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-btn">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Groups Modal -->
+        <div id="groups-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>分组管理</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="groups-content">
+                    <div class="form-group">
+                        <label>添加新分组</label>
+                        <div class="input-group">
+                            <input type="text" id="new-group-name" placeholder="分组名称">
+                            <button id="add-group-btn" class="btn btn-primary">添加</button>
+                        </div>
+                    </div>
+                    <ul id="groups-list" class="groups-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mail Detail Modal -->
+        <div id="mail-detail-modal" class="modal hidden">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 id="mail-subject">邮件详情</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="mail-detail-content">
+                    <div class="mail-meta">
+                        <p><strong>发件人:</strong> <span id="mail-from"></span></p>
+                        <p><strong>收件人:</strong> <span id="mail-to"></span></p>
+                        <p><strong>抄送:</strong> <span id="mail-cc"></span></p>
+                        <p><strong>时间:</strong> <span id="mail-date"></span></p>
+                    </div>
+                    <div id="mail-body" class="mail-body"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="delete-mail-btn" class="btn btn-danger">删除邮件</button>
+                    <button class="btn btn-secondary close-btn">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Progress Modal -->
+        <div id="verify-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>批量测活</h2>
+                </div>
+                <div class="verify-content">
+                    <div id="verify-progress" class="progress-bar">
+                        <div id="verify-progress-inner" class="progress-inner"></div>
+                    </div>
+                    <p id="verify-status">正在验证...</p>
+                    <div id="verify-results" class="verify-results"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
