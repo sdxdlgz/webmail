@@ -12,16 +12,17 @@
         <div id="login-page" class="page">
             <div class="login-container">
                 <h1>Outlook 邮件管理</h1>
+                <p class="subtitle">统一管理您的多个邮箱账号</p>
                 <form id="login-form">
                     <div class="form-group">
                         <label for="username">用户名</label>
-                        <input type="text" id="username" name="username" required>
+                        <input type="text" id="username" name="username" required placeholder="请输入用户名">
                     </div>
                     <div class="form-group">
                         <label for="password">密码</label>
-                        <input type="password" id="password" name="password" required>
+                        <input type="password" id="password" name="password" required placeholder="请输入密码">
                     </div>
-                    <button type="submit" class="btn btn-primary">登录</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">登录</button>
                     <div id="login-error" class="error-message"></div>
                 </form>
             </div>
@@ -100,9 +101,13 @@
                     <!-- Account Selector -->
                     <div class="mail-sidebar">
                         <h3>选择账号</h3>
-                        <select id="mail-account-select" class="select-input">
-                            <option value="">请选择账号</option>
-                        </select>
+                        <div class="account-list-container">
+                            <div id="account-list" class="account-list">
+                                <div class="empty-state" style="padding: 20px;">
+                                    <p>暂无可用账号</p>
+                                </div>
+                            </div>
+                        </div>
 
                         <h3>文件夹</h3>
                         <ul id="folder-list" class="folder-list"></ul>
@@ -111,10 +116,14 @@
                     <!-- Mail List -->
                     <div class="mail-main">
                         <div class="mail-toolbar">
-                            <input type="text" id="mail-search" placeholder="搜索邮件..." class="search-input">
+                            <input type="text" id="mail-search" placeholder="搜索邮件..." class="search-input" style="flex: 1;">
                             <button id="refresh-mail-btn" class="btn btn-secondary">刷新</button>
                         </div>
-                        <div id="mail-list" class="mail-list"></div>
+                        <div id="mail-list" class="mail-list">
+                            <div class="empty-state">
+                                <p>请先选择一个账号</p>
+                            </div>
+                        </div>
                         <div id="mail-pagination" class="pagination"></div>
                     </div>
                 </div>
