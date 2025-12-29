@@ -148,15 +148,6 @@ function setupEventListeners() {
     document.getElementById('add-group-btn').addEventListener('click', addGroup);
 
     // Mail
-    document.getElementById('mail-account-select').addEventListener('change', (e) => {
-        currentMailAccount = e.target.value;
-        currentFolder = 'inbox';
-        if (currentMailAccount) {
-            loadFolders();
-            loadMails();
-        }
-    });
-
     document.getElementById('mail-search').addEventListener('input', debounce(loadMails, 300));
     document.getElementById('refresh-mail-btn').addEventListener('click', loadMails);
 
@@ -585,13 +576,40 @@ async function exportAccounts() {
 
 // Mail Functions
 function populateMailAccountSelect() {
-    const select = document.getElementById('mail-account-select');
-    select.innerHTML = '<option value="">请选择账号</option>';
-
+    const container = document.getElementById('account-list');
     const activeAccounts = accounts.filter(a => a.status === 'active' || a.status === 'unknown');
-    activeAccounts.forEach(a => {
-        select.innerHTML += `<option value="${a.id}">${escapeHtml(a.email)}</option>`;
-    });
+
+    if (activeAccounts.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding: 20px;">
+                <p>暂无可用账号</p>
+                <p style="font-size: 12px; margin-top: 8px;">请先添加账号并测活</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = activeAccounts.map(a => {
+        const statusText = a.status === 'active' ? '有效' : '未验证';
+        const isActive = currentMailAccount === a.id;
+        return `
+            <div class="account-item ${isActive ? 'active' : ''}" onclick="selectMailAccount('${a.id}')">
+                <div class="account-item-email">${escapeHtml(a.email)}</div>
+                <div class="account-item-status">
+                    <span class="status-badge status-${a.status}">${statusText}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectMailAccount(accountId) {
+    currentMailAccount = accountId;
+    currentFolder = 'inbox';
+    currentMailPage = 0;
+    populateMailAccountSelect(); // Re-render to update active state
+    loadFolders();
+    loadMails();
 }
 
 async function loadFolders() {
@@ -798,5 +816,6 @@ window.deleteAccount = deleteAccount;
 window.verifyAccount = verifyAccount;
 window.deleteGroup = deleteGroup;
 window.selectFolder = selectFolder;
+window.selectMailAccount = selectMailAccount;
 window.openMail = openMail;
 window.goToPage = goToPage;
