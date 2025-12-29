@@ -1,0 +1,16 @@
+services:
+  webmail:
+    build: .
+    container_name: webmail
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/backend/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      # 可选：设置加密密钥（生产环境建议设置）
+      # - TOKEN_ENC_KEY=your-fernet-key
+      # 可选：修改默认密码
+      # - DEFAULT_ADMIN_PASSWORD=your-secure-password
