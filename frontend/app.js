@@ -806,13 +806,16 @@ async function loadFolders() {
 
 function renderFolders(folders) {
     const list = document.getElementById('folder-list');
-    list.innerHTML = folders.map(f => `
-        <li class="${f.id === currentFolder || f.name.toLowerCase() === currentFolder ? 'active' : ''}"
+    list.innerHTML = folders.map(f => {
+        const isActive = f.id === currentFolder || f.name.toLowerCase() === currentFolder;
+        const hasUnread = f.unread_count > 0;
+        return `
+        <li class="${isActive ? 'active' : ''}"
             onclick="selectFolder('${f.id}')">
             <span>${escapeHtml(f.name)}</span>
-            <span class="folder-count">${f.unread_count > 0 ? f.unread_count : ''}</span>
+            ${hasUnread ? `<span class="folder-count">${f.unread_count}</span>` : '<span class="folder-count empty">-</span>'}
         </li>
-    `).join('');
+    `}).join('');
 }
 
 function selectFolder(folderId) {
@@ -854,7 +857,7 @@ function renderMails(mails, total) {
     }
 
     list.innerHTML = mails.map(m => `
-        <div class="mail-item ${m.is_read ? '' : 'unread'}" onclick="openMail('${m.id}')">
+        <div class="mail-item ${m.is_read ? 'read' : 'unread'}" data-id="${m.id}" onclick="openMail('${m.id}')">
             <div class="mail-item-header">
                 <span class="mail-item-from">${escapeHtml(m.from_name || m.from_address || '未知')}</span>
                 <span class="mail-item-date">${formatDate(m.received_at)}</span>
@@ -897,6 +900,13 @@ let currentMailId = null;
 async function openMail(messageId) {
     currentMailId = messageId;
 
+    // Mark as read in UI immediately
+    const mailItem = document.querySelector(`.mail-item[data-id="${messageId}"]`);
+    if (mailItem && mailItem.classList.contains('unread')) {
+        mailItem.classList.remove('unread');
+        mailItem.classList.add('read');
+    }
+
     try {
         const res = await fetch(`${API_BASE}/accounts/${currentMailAccount}/messages/${messageId}`, { credentials: 'include' });
         if (res.ok) {
@@ -922,6 +932,9 @@ async function openMail(messageId) {
             }
 
             openModal('mail-detail-modal');
+
+            // Refresh folder counts after reading (the API marks it as read)
+            loadFolders();
         }
     } catch (e) {
         showToast('加载邮件失败', 'error');
