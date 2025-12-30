@@ -168,6 +168,8 @@ function setupEventListeners() {
 
     // Delete Mail
     document.getElementById('delete-mail-btn').addEventListener('click', deleteCurrentMail);
+    // Import mode tabs
+    setupImportTabs();
 }
 
 // Groups Functions
@@ -733,7 +735,12 @@ async function openMail(messageId) {
             const bodyDiv = document.getElementById('mail-body');
             if (mail.body_type === 'html') {
                 // Use iframe for HTML content (security)
-                bodyDiv.innerHTML = `<iframe sandbox srcdoc="${escapeHtml(mail.body_content || '')}"></iframe>`;
+                // Note: srcdoc needs the raw HTML, not escaped
+                const iframe = document.createElement('iframe');
+                iframe.sandbox = 'allow-same-origin';
+                iframe.srcdoc = mail.body_content || '';
+                bodyDiv.innerHTML = '';
+                bodyDiv.appendChild(iframe);
             } else {
                 bodyDiv.innerHTML = `<pre>${escapeHtml(mail.body_content || '')}</pre>`;
             }
@@ -819,3 +826,85 @@ window.selectFolder = selectFolder;
 window.selectMailAccount = selectMailAccount;
 window.openMail = openMail;
 window.goToPage = goToPage;
+
+// Import Tabs Setup
+let importMode = 'text';
+let importFileContent = '';
+
+function setupImportTabs() {
+    const tabs = document.querySelectorAll('.import-tab');
+    const textMode = document.getElementById('import-text-mode');
+    const fileMode = document.getElementById('import-file-mode');
+    const fileInput = document.getElementById('import-file');
+    const uploadArea = document.getElementById('file-upload-area');
+    const clearFileBtn = document.getElementById('clear-file');
+
+    if (!tabs.length) return;
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            importMode = tab.dataset.mode;
+
+            if (importMode === 'text') {
+                textMode.classList.remove('hidden');
+                fileMode.classList.add('hidden');
+            } else {
+                textMode.classList.add('hidden');
+                fileMode.classList.remove('hidden');
+            }
+        });
+    });
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileSelect(file);
+    });
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.txt')) {
+            handleFileSelect(file);
+        } else {
+            showToast('请选择 .txt 文件', 'error');
+        }
+    });
+
+    clearFileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearImportFile();
+    });
+}
+
+function handleFileSelect(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        importFileContent = e.target.result;
+        document.getElementById('file-name').textContent = file.name;
+        document.querySelector('.file-upload-content').classList.add('hidden');
+        document.getElementById('file-selected').classList.remove('hidden');
+    };
+    reader.readAsText(file);
+}
+
+function clearImportFile() {
+    importFileContent = '';
+    document.getElementById('import-file').value = '';
+    document.querySelector('.file-upload-content').classList.remove('hidden');
+    document.getElementById('file-selected').classList.add('hidden');
+}
+
