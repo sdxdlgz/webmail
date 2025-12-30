@@ -280,8 +280,14 @@ function setupEventListeners() {
     // Mail group filter
     const mailGroupFilter = document.getElementById('mail-group-filter');
     if (mailGroupFilter) {
-        mailGroupFilter.addEventListener('change', populateMailAccountSelect);
+        mailGroupFilter.addEventListener('change', () => {
+            populateMailAccountSelect();
+            updateAccountSelectorLabel();
+        });
     }
+
+    // Account selector toggle
+    setupAccountSelector();
 
     // Modal Close - use event delegation for reliability
     document.addEventListener('click', (e) => {
@@ -801,8 +807,70 @@ function selectMailAccount(accountId) {
     currentFolder = 'inbox';
     currentMailPage = 0;
     populateMailAccountSelect(); // Re-render to update active state
+    updateAccountSelectorLabel(); // Update the header label
+    collapseAccountSelector(); // Collapse the dropdown
     loadFolders();
     loadMails();
+}
+
+// Account Selector Functions
+function setupAccountSelector() {
+    const selector = document.getElementById('account-selector');
+    const header = document.getElementById('account-selector-header');
+
+    if (!selector || !header) return;
+
+    // Click header to toggle
+    header.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selector.classList.toggle('expanded');
+    });
+
+    // Click outside to close
+    document.addEventListener('click', (e) => {
+        if (!selector.contains(e.target)) {
+            selector.classList.remove('expanded');
+        }
+    });
+
+    // Prevent dropdown clicks from closing
+    const dropdown = document.getElementById('account-selector-dropdown');
+    if (dropdown) {
+        dropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+}
+
+function collapseAccountSelector() {
+    const selector = document.getElementById('account-selector');
+    if (selector) {
+        selector.classList.remove('expanded');
+    }
+}
+
+function updateAccountSelectorLabel() {
+    const groupLabel = document.getElementById('current-group-label');
+    const accountLabel = document.getElementById('current-account-label');
+    const groupFilter = document.getElementById('mail-group-filter');
+
+    if (!groupLabel || !accountLabel) return;
+
+    // Update group label
+    if (groupFilter) {
+        const selectedOption = groupFilter.options[groupFilter.selectedIndex];
+        groupLabel.textContent = selectedOption ? selectedOption.text : '全部分组';
+    }
+
+    // Update account label
+    if (currentMailAccount) {
+        const account = accounts.find(a => a.id === currentMailAccount);
+        if (account) {
+            accountLabel.textContent = account.email;
+            return;
+        }
+    }
+    accountLabel.textContent = '请选择邮箱';
 }
 
 async function loadFolders() {

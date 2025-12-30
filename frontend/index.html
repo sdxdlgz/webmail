@@ -131,14 +131,25 @@
                 <div class="mail-layout">
                     <!-- Account Selector -->
                     <div class="mail-sidebar">
-                        <h3>选择邮箱</h3>
-                        <select id="mail-group-filter" class="select-input mail-group-filter">
-                            <option value="">全部分组</option>
-                        </select>
-                        <div class="account-list-container">
-                            <div id="account-list" class="account-list">
-                                <div class="empty-state" style="padding: 20px;">
-                                    <p>暂无可用账号</p>
+                        <!-- Collapsible Account Selector -->
+                        <div class="account-selector" id="account-selector">
+                            <div class="account-selector-header" id="account-selector-header">
+                                <div class="account-selector-current">
+                                    <span class="current-group" id="current-group-label">全部分组</span>
+                                    <span class="current-account" id="current-account-label">请选择邮箱</span>
+                                </div>
+                                <span class="account-selector-arrow">▼</span>
+                            </div>
+                            <div class="account-selector-dropdown" id="account-selector-dropdown">
+                                <select id="mail-group-filter" class="select-input mail-group-filter">
+                                    <option value="">全部分组</option>
+                                </select>
+                                <div class="account-list-container">
+                                    <div id="account-list" class="account-list">
+                                        <div class="empty-state" style="padding: 20px;">
+                                            <p>暂无可用账号</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
