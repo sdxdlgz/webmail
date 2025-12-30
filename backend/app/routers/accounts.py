@@ -73,6 +73,7 @@ def account_to_out(account: Dict[str, Any]) -> AccountOut:
         email=account["email"],
         client_id=account["client_id"],
         group_id=account.get("group_id"),
+        remark=account.get("remark"),
         status=account.get("status", "unknown"),
         last_verified=account.get("last_verified"),
         created_at=account["created_at"],
@@ -135,6 +136,7 @@ def create_account(
             "refresh_token": encrypt_field(fernet, payload.refresh_token),
             "client_id": payload.client_id,
             "group_id": payload.group_id,
+            "remark": payload.remark,
             "status": "unknown",
             "last_verified": None,
             "created_at": now,
@@ -254,6 +256,9 @@ def update_account(
 
         if payload.client_id is not None:
             account["client_id"] = payload.client_id
+
+        if payload.remark is not None:
+            account["remark"] = payload.remark
 
         return account
 
