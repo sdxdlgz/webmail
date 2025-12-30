@@ -277,6 +277,12 @@ function setupEventListeners() {
     document.getElementById('mail-search').addEventListener('input', debounce(loadMails, 300));
     document.getElementById('refresh-mail-btn').addEventListener('click', loadMails);
 
+    // Mail group filter
+    const mailGroupFilter = document.getElementById('mail-group-filter');
+    if (mailGroupFilter) {
+        mailGroupFilter.addEventListener('change', populateMailAccountSelect);
+    }
+
     // Modal Close - use event delegation for reliability
     document.addEventListener('click', (e) => {
         // Close button clicked
@@ -340,13 +346,13 @@ async function loadGroups() {
 }
 
 function populateGroupSelects() {
-    const selects = ['group-filter', 'acc-group', 'import-group', 'edit-acc-group'];
+    const selects = ['group-filter', 'acc-group', 'import-group', 'edit-acc-group', 'mail-group-filter'];
     selects.forEach(id => {
         const select = document.getElementById(id);
         if (!select) return;
 
         const currentValue = select.value;
-        const isFilter = id === 'group-filter';
+        const isFilter = id === 'group-filter' || id === 'mail-group-filter';
 
         select.innerHTML = isFilter ? '<option value="">全部分组</option>' : '<option value="">无分组</option>';
         groups.forEach(g => {
@@ -756,25 +762,34 @@ async function exportAccounts() {
 // Mail Functions
 function populateMailAccountSelect() {
     const container = document.getElementById('account-list');
+    const groupFilter = document.getElementById('mail-group-filter');
+    const selectedGroupId = groupFilter ? groupFilter.value : '';
 
-    if (accounts.length === 0) {
+    // Filter accounts by group if selected
+    const filteredAccounts = selectedGroupId
+        ? accounts.filter(a => a.group_id === selectedGroupId)
+        : accounts;
+
+    if (filteredAccounts.length === 0) {
         container.innerHTML = `
             <div class="empty-state" style="padding: 20px;">
-                <p>暂无可用邮箱</p>
-                <p style="font-size: 12px; margin-top: 8px;">请先添加邮箱</p>
+                <p>${selectedGroupId ? '该分组暂无邮箱' : '暂无可用邮箱'}</p>
+                <p style="font-size: 12px; margin-top: 8px;">${selectedGroupId ? '请选择其他分组' : '请先添加邮箱'}</p>
             </div>
         `;
         return;
     }
 
-    container.innerHTML = accounts.map(a => {
+    container.innerHTML = filteredAccounts.map(a => {
         const statusText = { active: '有效', invalid: '失效', unknown: '未验证' }[a.status] || '未知';
         const isActive = currentMailAccount === a.id;
+        const group = groups.find(g => g.id === a.group_id);
         return `
             <div class="account-item ${isActive ? 'active' : ''}" onclick="selectMailAccount('${a.id}')">
                 <div class="account-item-email">${escapeHtml(a.email)}</div>
                 <div class="account-item-status">
                     <span class="status-badge status-${a.status}">${statusText}</span>
+                    ${group ? `<span class="account-item-group">${escapeHtml(group.name)}</span>` : ''}
                 </div>
             </div>
         `;
