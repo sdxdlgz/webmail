@@ -32,8 +32,12 @@
 ### 方式一：Docker 部署（推荐）
 
 ```bash
-# 拉取镜像
-docker pull your-username/webmail:latest
+# 克隆项目
+git clone https://github.com/sdxdlgz/webmail.git
+cd webmail
+
+# 构建镜像
+docker build -t webmail .
 
 # 运行容器
 docker run -d \
@@ -42,7 +46,7 @@ docker run -d \
   -v webmail-data:/app/backend/data \
   -e DEFAULT_ADMIN_PASSWORD=your-secure-password \
   -e TOKEN_ENC_KEY=your-fernet-key \
-  your-username/webmail:latest
+  webmail
 ```
 
 或使用 Docker Compose：
@@ -51,7 +55,7 @@ docker run -d \
 version: '3.8'
 services:
   webmail:
-    image: your-username/webmail:latest
+    build: .
     container_name: webmail
     ports:
       - "8000:8000"
@@ -64,6 +68,11 @@ services:
 
 volumes:
   webmail-data:
+```
+
+```bash
+# 使用 Docker Compose 启动
+docker-compose up -d
 ```
 
 ### 方式二：手动部署
