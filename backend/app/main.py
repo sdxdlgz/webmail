@@ -20,19 +20,26 @@ FRONTEND_DIR = PROJECT_ROOT / "frontend"
 
 
 def _ensure_default_admin(store: JSONStore, settings: Settings) -> None:
+    from datetime import datetime, timezone
+
     def _mutator(data):
         data.setdefault("groups", [])
         data.setdefault("accounts", [])
+        data.setdefault("settings", {"allow_registration": True})
 
         users = data.setdefault("users", [])
         if users:
             return
 
+        now = datetime.now(timezone.utc).isoformat()
         users.append(
             {
                 "id": str(uuid.uuid4()),
                 "username": settings.default_admin_username,
                 "password_hash": hash_password(settings.default_admin_password),
+                "role": "admin",
+                "must_change_password": True,
+                "created_at": now,
             }
         )
 

@@ -5,6 +5,7 @@ const API_BASE = '/api';
 let currentUser = null;
 let accounts = [];
 let groups = [];
+let users = [];
 let selectedAccountIds = new Set();
 let currentMailAccount = null;
 let currentFolder = 'inbox';
@@ -12,9 +13,11 @@ let currentMailPage = 0;
 const MAIL_PAGE_SIZE = 50;
 let importMode = 'text';
 let importFileContent = '';
+let systemSettings = { allow_registration: true };
 
 // DOM Elements
 const loginPage = document.getElementById('login-page');
+const registerPage = document.getElementById('register-page');
 const mainApp = document.getElementById('main-app');
 const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
@@ -33,8 +36,14 @@ async function checkAuth() {
         const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
         if (res.ok) {
             currentUser = await res.json();
-            showMainApp();
+            // Check if user must change password
+            if (currentUser.must_change_password) {
+                showChangePasswordModal(true);
+            } else {
+                showMainApp();
+            }
         } else {
+            await loadSystemSettings();
             showLoginPage();
         }
     } catch (e) {
@@ -42,15 +51,54 @@ async function checkAuth() {
     }
 }
 
+async function loadSystemSettings() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/settings`, { credentials: 'include' });
+        if (res.ok) {
+            systemSettings = await res.json();
+            // Show/hide register link based on settings
+            const registerLink = document.getElementById('register-link');
+            if (registerLink) {
+                if (systemSettings.allow_registration) {
+                    registerLink.classList.remove('hidden');
+                } else {
+                    registerLink.classList.add('hidden');
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load system settings:', e);
+    }
+}
+
 function showLoginPage() {
     loginPage.classList.remove('hidden');
+    registerPage.classList.add('hidden');
+    mainApp.classList.add('hidden');
+}
+
+function showRegisterPage() {
+    loginPage.classList.add('hidden');
+    registerPage.classList.remove('hidden');
     mainApp.classList.add('hidden');
 }
 
 function showMainApp() {
     loginPage.classList.add('hidden');
+    registerPage.classList.add('hidden');
     mainApp.classList.remove('hidden');
     currentUserSpan.textContent = currentUser.username;
+
+    // Show admin tab for admins
+    const adminTab = document.querySelector('.tab-btn[data-tab="admin"]');
+    if (adminTab) {
+        if (currentUser.role === 'admin') {
+            adminTab.classList.remove('hidden');
+        } else {
+            adminTab.classList.add('hidden');
+        }
+    }
+
     loadGroups();
     loadAccounts();
 }
@@ -65,8 +113,13 @@ async function login(username, password) {
         });
         if (res.ok) {
             currentUser = await res.json();
-            showMainApp();
             loginError.textContent = '';
+            // Check if user must change password
+            if (currentUser.must_change_password) {
+                showChangePasswordModal(true);
+            } else {
+                showMainApp();
+            }
         } else {
             const data = await res.json();
             loginError.textContent = data.detail || '登录失败';
@@ -76,9 +129,31 @@ async function login(username, password) {
     }
 }
 
+async function register(username, password) {
+    try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username, password })
+        });
+        if (res.ok) {
+            document.getElementById('register-error').textContent = '';
+            showToast('注册成功，请登录', 'success');
+            showLoginPage();
+        } else {
+            const data = await res.json();
+            document.getElementById('register-error').textContent = data.detail || '注册失败';
+        }
+    } catch (e) {
+        document.getElementById('register-error').textContent = '网络错误';
+    }
+}
+
 async function logout() {
     await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
     currentUser = null;
+    await loadSystemSettings();
     showLoginPage();
 }
 
@@ -94,6 +169,46 @@ function setupEventListeners() {
 
     logoutBtn.addEventListener('click', logout);
 
+    // Register page navigation
+    const showRegisterLink = document.getElementById('show-register');
+    if (showRegisterLink) {
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showRegisterPage();
+        });
+    }
+
+    const showLoginLink = document.getElementById('show-login');
+    if (showLoginLink) {
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginPage();
+        });
+    }
+
+    // Register form
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-password-confirm').value;
+
+            if (password !== confirmPassword) {
+                document.getElementById('register-error').textContent = '两次输入的密码不一致';
+                return;
+            }
+            register(username, password);
+        });
+    }
+
+    // Change password form
+    const changePasswordForm = document.getElementById('change-password-form');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', handleChangePassword);
+    }
+
     // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -108,6 +223,8 @@ function setupEventListeners() {
                     await loadAccounts();
                 }
                 populateMailAccountSelect();
+            } else if (btn.dataset.tab === 'admin') {
+                loadAdminData();
             }
         });
     });
@@ -178,6 +295,32 @@ function setupEventListeners() {
     setupImportTabs();
     // Confirm dialog
     setupConfirmDialog();
+
+    // Admin functions
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveSystemSettings);
+    }
+
+    const addUserBtn = document.getElementById('add-user-btn');
+    if (addUserBtn) {
+        addUserBtn.addEventListener('click', () => openModal('add-user-modal'));
+    }
+
+    const addUserForm = document.getElementById('add-user-form');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', handleAddUser);
+    }
+
+    const editUserForm = document.getElementById('edit-user-form');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', handleEditUser);
+    }
+
+    const userSearch = document.getElementById('user-search');
+    if (userSearch) {
+        userSearch.addEventListener('input', debounce(renderUsersTable, 300));
+    }
 }
 
 // Groups Functions
@@ -965,4 +1108,295 @@ function clearImportFile() {
     document.querySelector('.file-upload-content').classList.remove('hidden');
     document.getElementById('file-selected').classList.add('hidden');
 }
+
+// ============ Password Change Functions ============
+
+let forcePasswordChange = false;
+
+function showChangePasswordModal(force = false) {
+    forcePasswordChange = force;
+    const modal = document.getElementById('change-password-modal');
+    if (modal) {
+        // Clear form
+        document.getElementById('cp-new-username').value = '';
+        document.getElementById('cp-old-password').value = '';
+        document.getElementById('cp-new-password').value = '';
+        document.getElementById('cp-confirm-password').value = '';
+        document.getElementById('change-password-error').textContent = '';
+
+        // Show current username hint
+        if (currentUser) {
+            document.getElementById('cp-new-username').placeholder = `当前: ${currentUser.username} (留空不修改)`;
+        }
+
+        modal.classList.remove('hidden');
+    }
+}
+
+async function handleChangePassword(e) {
+    e.preventDefault();
+
+    const newUsername = document.getElementById('cp-new-username').value.trim();
+    const oldPassword = document.getElementById('cp-old-password').value;
+    const newPassword = document.getElementById('cp-new-password').value;
+    const confirmPassword = document.getElementById('cp-confirm-password').value;
+    const errorDiv = document.getElementById('change-password-error');
+
+    if (newPassword !== confirmPassword) {
+        errorDiv.textContent = '两次输入的新密码不一致';
+        return;
+    }
+
+    try {
+        const payload = {
+            old_password: oldPassword,
+            new_password: newPassword
+        };
+        if (newUsername) {
+            payload.new_username = newUsername;
+        }
+
+        const res = await fetch(`${API_BASE}/auth/change-password`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            closeModal('change-password-modal');
+            showToast('密码修改成功', 'success');
+
+            // Update current user info
+            if (newUsername) {
+                currentUser.username = newUsername;
+            }
+            currentUser.must_change_password = false;
+
+            if (forcePasswordChange) {
+                showMainApp();
+            }
+        } else {
+            const data = await res.json();
+            errorDiv.textContent = data.detail || '修改失败';
+        }
+    } catch (e) {
+        errorDiv.textContent = '网络错误';
+    }
+}
+
+// ============ Admin Functions ============
+
+async function loadAdminData() {
+    await Promise.all([
+        loadAdminSettings(),
+        loadUsers()
+    ]);
+}
+
+async function loadAdminSettings() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/settings`, { credentials: 'include' });
+        if (res.ok) {
+            const settings = await res.json();
+            const checkbox = document.getElementById('allow-registration');
+            if (checkbox) {
+                checkbox.checked = settings.allow_registration;
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load admin settings:', e);
+    }
+}
+
+async function saveSystemSettings() {
+    const allowRegistration = document.getElementById('allow-registration').checked;
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/admin/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ allow_registration: allowRegistration })
+        });
+
+        if (res.ok) {
+            showToast('设置已保存', 'success');
+        } else {
+            const data = await res.json();
+            showToast(data.detail || '保存失败', 'error');
+        }
+    } catch (e) {
+        showToast('网络错误', 'error');
+    }
+}
+
+async function loadUsers() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/admin/users`, { credentials: 'include' });
+        if (res.ok) {
+            users = await res.json();
+            renderUsersTable();
+        }
+    } catch (e) {
+        console.error('Failed to load users:', e);
+    }
+}
+
+function renderUsersTable() {
+    const tbody = document.getElementById('users-tbody');
+    if (!tbody) return;
+
+    const searchTerm = document.getElementById('user-search')?.value?.toLowerCase() || '';
+    const filteredUsers = users.filter(u =>
+        u.username.toLowerCase().includes(searchTerm)
+    );
+
+    if (filteredUsers.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty-state">
+                    <p>暂无用户</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filteredUsers.map(u => {
+        const roleClass = u.role === 'admin' ? 'role-admin' : 'role-user';
+        const roleText = u.role === 'admin' ? '管理员' : '普通用户';
+        const createdAt = u.created_at ? new Date(u.created_at).toLocaleString() : '-';
+        const isSelf = currentUser && u.id === currentUser.id;
+
+        return `
+            <tr>
+                <td>${escapeHtml(u.username)}</td>
+                <td><span class="role-badge ${roleClass}">${roleText}</span></td>
+                <td>${u.must_change_password ? '是' : '否'}</td>
+                <td>${createdAt}</td>
+                <td>
+                    <button class="btn btn-secondary btn-small" onclick="editUser('${u.id}')">编辑</button>
+                    ${!isSelf ? `<button class="btn btn-danger btn-small" onclick="deleteUser('${u.id}')">删除</button>` : ''}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function handleAddUser(e) {
+    e.preventDefault();
+
+    const username = document.getElementById('new-user-username').value;
+    const password = document.getElementById('new-user-password').value;
+    const role = document.getElementById('new-user-role').value;
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username, password })
+        });
+
+        if (res.ok) {
+            const newUser = await res.json();
+
+            // If role is admin, update the user
+            if (role === 'admin') {
+                await fetch(`${API_BASE}/auth/admin/users/${newUser.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ role: 'admin' })
+                });
+            }
+
+            closeModal('add-user-modal');
+            e.target.reset();
+            loadUsers();
+            showToast('用户已添加', 'success');
+        } else {
+            const data = await res.json();
+            showToast(data.detail || '添加失败', 'error');
+        }
+    } catch (e) {
+        showToast('网络错误', 'error');
+    }
+}
+
+function editUser(userId) {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-username').value = '';
+    document.getElementById('edit-user-username').placeholder = `当前: ${user.username}`;
+    document.getElementById('edit-user-password').value = '';
+    document.getElementById('edit-user-role').value = user.role;
+
+    openModal('edit-user-modal');
+}
+
+async function handleEditUser(e) {
+    e.preventDefault();
+
+    const userId = document.getElementById('edit-user-id').value;
+    const username = document.getElementById('edit-user-username').value.trim();
+    const password = document.getElementById('edit-user-password').value;
+    const role = document.getElementById('edit-user-role').value;
+
+    const payload = { role };
+    if (username) payload.username = username;
+    if (password) payload.password = password;
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/admin/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            closeModal('edit-user-modal');
+            loadUsers();
+            showToast('用户已更新', 'success');
+        } else {
+            const data = await res.json();
+            showToast(data.detail || '更新失败', 'error');
+        }
+    } catch (e) {
+        showToast('网络错误', 'error');
+    }
+}
+
+async function deleteUser(userId) {
+    const user = users.find(u => u.id === userId);
+    const username = user ? user.username : '';
+
+    const confirmed = await showConfirm(`确定删除用户 ${username}？\n该用户的所有邮箱和分组也将被删除。`, '删除用户');
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/admin/users/${userId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        if (res.ok) {
+            loadUsers();
+            showToast('用户已删除', 'success');
+        } else {
+            const data = await res.json();
+            showToast(data.detail || '删除失败', 'error');
+        }
+    } catch (e) {
+        showToast('删除失败', 'error');
+    }
+}
+
+// Make admin functions available globally
+window.editUser = editUser;
+window.deleteUser = deleteUser;
 

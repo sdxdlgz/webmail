@@ -93,6 +93,9 @@ def list_accounts(
     data = store.read()
     accounts = data.get("accounts", [])
 
+    # Multi-tenant: filter by owner_id
+    accounts = [a for a in accounts if a.get("owner_id") == current_user["id"]]
+
     if search:
         search_lower = search.lower()
         accounts = [a for a in accounts if search_lower in a.get("email", "").lower()]
@@ -114,23 +117,25 @@ def create_account(
     current_user: Dict = Depends(get_current_user),
 ) -> AccountOut:
     fernet = get_fernet(request)
+    user_id = current_user["id"]
 
     def _mutator(data: Dict[str, Any]) -> Dict[str, Any]:
         accounts = data.setdefault("accounts", [])
 
-        # Check duplicate email
-        if any(a.get("email") == payload.email for a in accounts):
+        # Check duplicate email for this user
+        if any(a.get("email") == payload.email and a.get("owner_id") == user_id for a in accounts):
             raise HTTPException(status_code=400, detail="Account with this email already exists")
 
-        # Validate group if provided
+        # Validate group if provided (must belong to user)
         if payload.group_id:
             groups = data.get("groups", [])
-            if not any(g.get("id") == payload.group_id for g in groups):
+            if not any(g.get("id") == payload.group_id and g.get("owner_id") == user_id for g in groups):
                 raise HTTPException(status_code=400, detail="Group not found")
 
         now = datetime.now(timezone.utc).isoformat()
         account = {
             "id": str(uuid.uuid4()),
+            "owner_id": user_id,
             "email": payload.email,
             "password": encrypt_field(fernet, payload.password),
             "refresh_token": encrypt_field(fernet, payload.refresh_token),
@@ -156,6 +161,7 @@ def batch_import_accounts(
     current_user: Dict = Depends(get_current_user),
 ) -> Dict[str, Any]:
     fernet = get_fernet(request)
+    user_id = current_user["id"]
     lines = payload.data.strip().split("\n")
 
     imported = []
@@ -164,12 +170,13 @@ def batch_import_accounts(
 
     def _mutator(data: Dict[str, Any]) -> None:
         accounts = data.setdefault("accounts", [])
-        existing_emails = {a.get("email") for a in accounts}
+        # Only check duplicates within user's own accounts
+        existing_emails = {a.get("email") for a in accounts if a.get("owner_id") == user_id}
 
-        # Validate group if provided
+        # Validate group if provided (must belong to user)
         if payload.group_id:
             groups = data.get("groups", [])
-            if not any(g.get("id") == payload.group_id for g in groups):
+            if not any(g.get("id") == payload.group_id and g.get("owner_id") == user_id for g in groups):
                 raise HTTPException(status_code=400, detail="Group not found")
 
         for i, line in enumerate(lines, 1):
@@ -190,6 +197,7 @@ def batch_import_accounts(
             now = datetime.now(timezone.utc).isoformat()
             account = {
                 "id": str(uuid.uuid4()),
+                "owner_id": user_id,
                 "email": parsed["email"],
                 "password": encrypt_field(fernet, parsed["password"]),
                 "refresh_token": encrypt_field(fernet, parsed["refresh_token"]),
@@ -226,24 +234,25 @@ def update_account(
     current_user: Dict = Depends(get_current_user),
 ) -> AccountOut:
     fernet = get_fernet(request)
+    user_id = current_user["id"]
 
     def _mutator(data: Dict[str, Any]) -> Dict[str, Any]:
         accounts = data.get("accounts", [])
-        account = next((a for a in accounts if a.get("id") == account_id), None)
+        account = next((a for a in accounts if a.get("id") == account_id and a.get("owner_id") == user_id), None)
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
 
-        # Validate group if provided
+        # Validate group if provided (must belong to user)
         if payload.group_id is not None:
             if payload.group_id:
                 groups = data.get("groups", [])
-                if not any(g.get("id") == payload.group_id for g in groups):
+                if not any(g.get("id") == payload.group_id and g.get("owner_id") == user_id for g in groups):
                     raise HTTPException(status_code=400, detail="Group not found")
             account["group_id"] = payload.group_id
 
         if payload.email is not None:
-            # Check duplicate
-            if any(a.get("email") == payload.email and a.get("id") != account_id for a in accounts):
+            # Check duplicate within user's accounts
+            if any(a.get("email") == payload.email and a.get("id") != account_id and a.get("owner_id") == user_id for a in accounts):
                 raise HTTPException(status_code=400, detail="Account with this email already exists")
             account["email"] = payload.email
 
@@ -272,9 +281,11 @@ def delete_account(
     store: JSONStore = Depends(get_store),
     current_user: Dict = Depends(get_current_user),
 ) -> None:
+    user_id = current_user["id"]
+
     def _mutator(data: Dict[str, Any]) -> None:
         accounts = data.get("accounts", [])
-        idx = next((i for i, a in enumerate(accounts) if a.get("id") == account_id), None)
+        idx = next((i for i, a in enumerate(accounts) if a.get("id") == account_id and a.get("owner_id") == user_id), None)
         if idx is None:
             raise HTTPException(status_code=404, detail="Account not found")
         accounts.pop(idx)
@@ -288,6 +299,7 @@ def batch_delete_accounts(
     store: JSONStore = Depends(get_store),
     current_user: Dict = Depends(get_current_user),
 ) -> Dict[str, int]:
+    user_id = current_user["id"]
     ids_to_delete = set(payload.ids)
     deleted_count = 0
 
@@ -295,7 +307,8 @@ def batch_delete_accounts(
         nonlocal deleted_count
         accounts = data.get("accounts", [])
         original_len = len(accounts)
-        data["accounts"] = [a for a in accounts if a.get("id") not in ids_to_delete]
+        # Only delete accounts owned by current user
+        data["accounts"] = [a for a in accounts if not (a.get("id") in ids_to_delete and a.get("owner_id") == user_id)]
         deleted_count = original_len - len(data["accounts"])
 
     store.update(_mutator)
@@ -310,8 +323,12 @@ def export_accounts(
     current_user: Dict = Depends(get_current_user),
 ) -> str:
     fernet = get_fernet(request)
+    user_id = current_user["id"]
     data = store.read()
     accounts = data.get("accounts", [])
+
+    # Multi-tenant: filter by owner_id
+    accounts = [a for a in accounts if a.get("owner_id") == user_id]
 
     if group_id:
         accounts = [a for a in accounts if a.get("group_id") == group_id]
@@ -333,8 +350,11 @@ def list_groups(
     store: JSONStore = Depends(get_store),
     current_user: Dict = Depends(get_current_user),
 ) -> List[GroupOut]:
+    user_id = current_user["id"]
     data = store.read()
     groups = data.get("groups", [])
+    # Multi-tenant: filter by owner_id
+    groups = [g for g in groups if g.get("owner_id") == user_id]
     return [GroupOut(id=g["id"], name=g["name"]) for g in groups]
 
 
@@ -344,15 +364,18 @@ def create_group(
     store: JSONStore = Depends(get_store),
     current_user: Dict = Depends(get_current_user),
 ) -> GroupOut:
+    user_id = current_user["id"]
+
     def _mutator(data: Dict[str, Any]) -> Dict[str, Any]:
         groups = data.setdefault("groups", [])
 
-        # Check duplicate name
-        if any(g.get("name") == payload.name for g in groups):
+        # Check duplicate name within user's groups
+        if any(g.get("name") == payload.name and g.get("owner_id") == user_id for g in groups):
             raise HTTPException(status_code=400, detail="Group with this name already exists")
 
         group = {
             "id": str(uuid.uuid4()),
+            "owner_id": user_id,
             "name": payload.name,
         }
         groups.append(group)
@@ -368,16 +391,18 @@ def delete_group(
     store: JSONStore = Depends(get_store),
     current_user: Dict = Depends(get_current_user),
 ) -> None:
+    user_id = current_user["id"]
+
     def _mutator(data: Dict[str, Any]) -> None:
         groups = data.get("groups", [])
-        idx = next((i for i, g in enumerate(groups) if g.get("id") == group_id), None)
+        idx = next((i for i, g in enumerate(groups) if g.get("id") == group_id and g.get("owner_id") == user_id), None)
         if idx is None:
             raise HTTPException(status_code=404, detail="Group not found")
         groups.pop(idx)
 
-        # Remove group_id from accounts
+        # Remove group_id from user's accounts only
         for account in data.get("accounts", []):
-            if account.get("group_id") == group_id:
+            if account.get("group_id") == group_id and account.get("owner_id") == user_id:
                 account["group_id"] = None
 
     store.update(_mutator)

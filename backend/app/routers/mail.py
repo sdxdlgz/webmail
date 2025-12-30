@@ -36,9 +36,9 @@ def decrypt_field(fernet: Optional[Fernet], value: str) -> str:
         return value
 
 
-def get_account_by_id(store: JSONStore, account_id: str) -> Dict[str, Any]:
+def get_account_by_id(store: JSONStore, account_id: str, user_id: str) -> Dict[str, Any]:
     data = store.read()
-    account = next((a for a in data.get("accounts", []) if a.get("id") == account_id), None)
+    account = next((a for a in data.get("accounts", []) if a.get("id") == account_id and a.get("owner_id") == user_id), None)
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
     return account
@@ -75,7 +75,8 @@ async def verify_single_account(
     current_user: Dict = Depends(get_current_user),
 ) -> VerifyResult:
     fernet = get_fernet(request)
-    account = get_account_by_id(store, account_id)
+    user_id = current_user["id"]
+    account = get_account_by_id(store, account_id, user_id)
 
     refresh_token = decrypt_field(fernet, account.get("refresh_token", ""))
     client_id = account.get("client_id", "")
@@ -85,7 +86,7 @@ async def verify_single_account(
     # Update account status
     def _mutator(data: Dict[str, Any]) -> None:
         accounts = data.get("accounts", [])
-        acc = next((a for a in accounts if a.get("id") == account_id), None)
+        acc = next((a for a in accounts if a.get("id") == account_id and a.get("owner_id") == user_id), None)
         if acc:
             acc["status"] = "active" if is_valid else "invalid"
             acc["last_verified"] = datetime.now(timezone.utc).isoformat()
@@ -107,8 +108,10 @@ async def batch_verify_accounts(
     current_user: Dict = Depends(get_current_user),
 ) -> List[VerifyResult]:
     fernet = get_fernet(request)
+    user_id = current_user["id"]
     data = store.read()
-    accounts = data.get("accounts", [])
+    # Multi-tenant: only verify user's own accounts
+    accounts = [a for a in data.get("accounts", []) if a.get("owner_id") == user_id]
 
     if not accounts:
         return []
@@ -133,9 +136,9 @@ async def batch_verify_accounts(
 
     results = await asyncio.gather(*[verify_with_limit(a) for a in accounts])
 
-    # Update all account statuses
+    # Update all account statuses (only user's accounts)
     def _mutator(data: Dict[str, Any]) -> None:
-        accounts_map = {a["id"]: a for a in data.get("accounts", [])}
+        accounts_map = {a["id"]: a for a in data.get("accounts", []) if a.get("owner_id") == user_id}
         now = datetime.now(timezone.utc).isoformat()
         for result in results:
             acc = accounts_map.get(result.account_id)
@@ -158,7 +161,8 @@ async def get_folders(
     current_user: Dict = Depends(get_current_user),
 ) -> List[MailFolder]:
     fernet = get_fernet(request)
-    account = get_account_by_id(store, account_id)
+    user_id = current_user["id"]
+    account = get_account_by_id(store, account_id, user_id)
     access_token = await get_access_token_for_account(account, fernet)
 
     try:
@@ -180,7 +184,8 @@ async def get_messages(
     current_user: Dict = Depends(get_current_user),
 ) -> Dict[str, Any]:
     fernet = get_fernet(request)
-    account = get_account_by_id(store, account_id)
+    user_id = current_user["id"]
+    account = get_account_by_id(store, account_id, user_id)
     access_token = await get_access_token_for_account(account, fernet)
 
     try:
@@ -210,7 +215,8 @@ async def get_message_detail(
     current_user: Dict = Depends(get_current_user),
 ) -> MailDetail:
     fernet = get_fernet(request)
-    account = get_account_by_id(store, account_id)
+    user_id = current_user["id"]
+    account = get_account_by_id(store, account_id, user_id)
     access_token = await get_access_token_for_account(account, fernet)
 
     try:
@@ -229,7 +235,8 @@ async def delete_message(
     current_user: Dict = Depends(get_current_user),
 ) -> MessageResponse:
     fernet = get_fernet(request)
-    account = get_account_by_id(store, account_id)
+    user_id = current_user["id"]
+    account = get_account_by_id(store, account_id, user_id)
     access_token = await get_access_token_for_account(account, fernet)
 
     try:
@@ -248,7 +255,8 @@ async def get_unread_count(
     current_user: Dict = Depends(get_current_user),
 ) -> Dict[str, int]:
     fernet = get_fernet(request)
-    account = get_account_by_id(store, account_id)
+    user_id = current_user["id"]
+    account = get_account_by_id(store, account_id, user_id)
     access_token = await get_access_token_for_account(account, fernet)
 
     try:
