@@ -8,9 +8,40 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
+class RegisterRequest(BaseModel):
+    username: str = Field(min_length=3, max_length=64)
+    password: str = Field(min_length=6, max_length=128)
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=6, max_length=128)
+    new_username: Optional[str] = Field(default=None, min_length=3, max_length=64)
+
+
 class UserOut(BaseModel):
     id: str
     username: str
+    role: str = "user"
+    must_change_password: bool = False
+
+
+class AdminUserOut(BaseModel):
+    id: str
+    username: str
+    role: str
+    must_change_password: bool
+    created_at: str
+
+
+class UserUpdateRequest(BaseModel):
+    username: Optional[str] = Field(default=None, min_length=3, max_length=64)
+    password: Optional[str] = Field(default=None, min_length=6, max_length=128)
+    role: Optional[str] = Field(default=None, pattern="^(admin|user)$")
+
+
+class SystemSettings(BaseModel):
+    allow_registration: bool = True
 
 
 class MessageResponse(BaseModel):

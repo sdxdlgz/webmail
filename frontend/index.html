@@ -25,6 +25,36 @@
                     <button type="submit" class="btn btn-primary" style="width: 100%;">登录</button>
                     <div id="login-error" class="error-message"></div>
                 </form>
+                <div id="register-link" class="register-link hidden">
+                    <p>还没有账号？<a href="#" id="show-register">立即注册</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Page -->
+        <div id="register-page" class="page hidden">
+            <div class="login-container">
+                <h1>用户注册</h1>
+                <p class="subtitle">创建您的账号</p>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="reg-username">用户名</label>
+                        <input type="text" id="reg-username" name="username" required placeholder="请输入用户名 (3-64字符)" minlength="3" maxlength="64">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">密码</label>
+                        <input type="password" id="reg-password" name="password" required placeholder="请输入密码 (至少6位)" minlength="6" maxlength="128">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password-confirm">确认密码</label>
+                        <input type="password" id="reg-password-confirm" name="password_confirm" required placeholder="请再次输入密码">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">注册</button>
+                    <div id="register-error" class="error-message"></div>
+                </form>
+                <div class="register-link">
+                    <p>已有账号？<a href="#" id="show-login">返回登录</a></p>
+                </div>
             </div>
         </div>
 
@@ -43,6 +73,7 @@
             <nav class="nav-tabs">
                 <button class="tab-btn active" data-tab="accounts">邮箱管理</button>
                 <button class="tab-btn" data-tab="mail">邮件查看</button>
+                <button class="tab-btn admin-only hidden" data-tab="admin">系统管理</button>
             </nav>
 
             <!-- Accounts Tab -->
@@ -125,6 +156,53 @@
                             </div>
                         </div>
                         <div id="mail-pagination" class="pagination"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Tab -->
+            <div id="admin-tab" class="tab-content hidden">
+                <div class="admin-layout">
+                    <!-- System Settings -->
+                    <div class="admin-section">
+                        <h3>系统设置</h3>
+                        <div class="settings-form">
+                            <div class="setting-item">
+                                <label>
+                                    <input type="checkbox" id="allow-registration">
+                                    允许用户注册
+                                </label>
+                                <p class="setting-desc">开启后，用户可以自行注册账号</p>
+                            </div>
+                            <button id="save-settings-btn" class="btn btn-primary">保存设置</button>
+                        </div>
+                    </div>
+
+                    <!-- User Management -->
+                    <div class="admin-section">
+                        <h3>用户管理</h3>
+                        <div class="toolbar">
+                            <div class="toolbar-left">
+                                <input type="text" id="user-search" placeholder="搜索用户..." class="search-input">
+                            </div>
+                            <div class="toolbar-right">
+                                <button id="add-user-btn" class="btn btn-primary">添加用户</button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>角色</th>
+                                        <th>需改密</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-tbody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -334,6 +412,100 @@
                     <button type="button" class="btn btn-secondary" id="confirm-cancel-btn">取消</button>
                     <button type="button" class="btn btn-danger" id="confirm-ok-btn">确定</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modal (Force on first login) -->
+        <div id="change-password-modal" class="modal hidden">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h2>修改密码</h2>
+                </div>
+                <form id="change-password-form">
+                    <div class="form-group">
+                        <label for="cp-new-username">新用户名 (可选)</label>
+                        <input type="text" id="cp-new-username" placeholder="留空则不修改" minlength="3" maxlength="64">
+                    </div>
+                    <div class="form-group">
+                        <label for="cp-old-password">当前密码</label>
+                        <input type="password" id="cp-old-password" required placeholder="请输入当前密码">
+                    </div>
+                    <div class="form-group">
+                        <label for="cp-new-password">新密码</label>
+                        <input type="password" id="cp-new-password" required placeholder="请输入新密码 (至少6位)" minlength="6" maxlength="128">
+                    </div>
+                    <div class="form-group">
+                        <label for="cp-confirm-password">确认新密码</label>
+                        <input type="password" id="cp-confirm-password" required placeholder="请再次输入新密码">
+                    </div>
+                    <div id="change-password-error" class="error-message"></div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">确认修改</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add User Modal (Admin) -->
+        <div id="add-user-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>添加用户</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="add-user-form">
+                    <div class="form-group">
+                        <label for="new-user-username">用户名</label>
+                        <input type="text" id="new-user-username" required placeholder="请输入用户名" minlength="3" maxlength="64">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-user-password">密码</label>
+                        <input type="password" id="new-user-password" required placeholder="请输入密码" minlength="6" maxlength="128">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-user-role">角色</label>
+                        <select id="new-user-role" class="select-input">
+                            <option value="user">普通用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-btn">取消</button>
+                        <button type="submit" class="btn btn-primary">添加</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit User Modal (Admin) -->
+        <div id="edit-user-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>编辑用户</h2>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id">
+                    <div class="form-group">
+                        <label for="edit-user-username">用户名</label>
+                        <input type="text" id="edit-user-username" placeholder="留空不修改" minlength="3" maxlength="64">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-user-password">新密码</label>
+                        <input type="password" id="edit-user-password" placeholder="留空不修改" minlength="6" maxlength="128">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-user-role">角色</label>
+                        <select id="edit-user-role" class="select-input">
+                            <option value="user">普通用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-btn">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
             </div>
         </div>
 
