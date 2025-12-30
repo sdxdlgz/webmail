@@ -113,11 +113,14 @@ async function login(username, password) {
         });
         if (res.ok) {
             currentUser = await res.json();
+            console.log('Login response:', currentUser);
             loginError.textContent = '';
             // Check if user must change password
             if (currentUser.must_change_password) {
+                console.log('Must change password, showing modal');
                 showChangePasswordModal(true);
             } else {
+                console.log('No password change required, showing main app');
                 showMainApp();
             }
         } else {
