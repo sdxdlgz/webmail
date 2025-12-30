@@ -176,6 +176,8 @@ function setupEventListeners() {
     document.getElementById('delete-mail-btn').addEventListener('click', deleteCurrentMail);
     // Import mode tabs
     setupImportTabs();
+    // Confirm dialog
+    setupConfirmDialog();
 }
 
 // Groups Functions
@@ -246,7 +248,8 @@ async function addGroup() {
 }
 
 async function deleteGroup(id) {
-    if (!confirm('确定删除此分组？')) return;
+    const confirmed = await showConfirm('确定删除此分组？', '删除分组');
+    if (!confirmed) return;
 
     try {
         const res = await fetch(`${API_BASE}/groups/${id}`, {
@@ -293,7 +296,7 @@ function renderAccountsTable() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="empty-state">
-                    <p>暂无账号</p>
+                    <p>暂无邮箱</p>
                 </td>
             </tr>
         `;
@@ -310,7 +313,7 @@ function renderAccountsTable() {
             <tr>
                 <td><input type="checkbox" data-id="${a.id}" ${selectedAccountIds.has(a.id) ? 'checked' : ''} onchange="toggleSelect('${a.id}')"></td>
                 <td>${escapeHtml(a.email)}</td>
-                <td>${escapeHtml(a.client_id.substring(0, 8))}...</td>
+                <td>${escapeHtml(a.remark || '-')}</td>
                 <td>${group ? escapeHtml(group.name) : '-'}</td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${lastVerified}</td>
@@ -353,7 +356,8 @@ async function addAccount(e) {
         password: document.getElementById('acc-password').value,
         refresh_token: document.getElementById('acc-refresh-token').value,
         client_id: document.getElementById('acc-client-id').value,
-        group_id: document.getElementById('acc-group').value || null
+        group_id: document.getElementById('acc-group').value || null,
+        remark: document.getElementById('acc-remark').value || null
     };
 
     try {
@@ -367,7 +371,7 @@ async function addAccount(e) {
             closeModal('add-account-modal');
             e.target.reset();
             loadAccounts();
-            showToast('账号已添加', 'success');
+            showToast('邮箱已添加', 'success');
         } else {
             const err = await res.json();
             showToast(err.detail || '添加失败', 'error');
@@ -431,6 +435,7 @@ function editAccount(id) {
     document.getElementById('edit-acc-refresh-token').value = '';
     document.getElementById('edit-acc-client-id').value = account.client_id;
     document.getElementById('edit-acc-group').value = account.group_id || '';
+    document.getElementById('edit-acc-remark').value = account.remark || '';
 
     openModal('edit-account-modal');
 }
@@ -446,12 +451,14 @@ async function updateAccount(e) {
     const refreshToken = document.getElementById('edit-acc-refresh-token').value;
     const clientId = document.getElementById('edit-acc-client-id').value;
     const groupId = document.getElementById('edit-acc-group').value;
+    const remark = document.getElementById('edit-acc-remark').value;
 
     if (email) data.email = email;
     if (password) data.password = password;
     if (refreshToken) data.refresh_token = refreshToken;
     if (clientId) data.client_id = clientId;
     data.group_id = groupId || null;
+    data.remark = remark || null;
 
     try {
         const res = await fetch(`${API_BASE}/accounts/${id}`, {
@@ -463,7 +470,7 @@ async function updateAccount(e) {
         if (res.ok) {
             closeModal('edit-account-modal');
             loadAccounts();
-            showToast('账号已更新', 'success');
+            showToast('邮箱已更新', 'success');
         } else {
             const err = await res.json();
             showToast(err.detail || '更新失败', 'error');
@@ -474,7 +481,10 @@ async function updateAccount(e) {
 }
 
 async function deleteAccount(id) {
-    if (!confirm('确定删除此账号？')) return;
+    const account = accounts.find(a => a.id === id);
+    const email = account ? account.email : '';
+    const confirmed = await showConfirm(`确定删除邮箱 ${email}？`, '删除邮箱');
+    if (!confirmed) return;
 
     try {
         const res = await fetch(`${API_BASE}/accounts/${id}`, {
@@ -483,7 +493,7 @@ async function deleteAccount(id) {
         });
         if (res.ok) {
             loadAccounts();
-            showToast('账号已删除', 'success');
+            showToast('邮箱已删除', 'success');
         }
     } catch (e) {
         showToast('删除失败', 'error');
@@ -491,7 +501,8 @@ async function deleteAccount(id) {
 }
 
 async function batchDeleteAccounts() {
-    if (!confirm(`确定删除选中的 ${selectedAccountIds.size} 个账号？`)) return;
+    const confirmed = await showConfirm(`确定删除选中的 ${selectedAccountIds.size} 个邮箱？`, '批量删除');
+    if (!confirmed) return;
 
     try {
         const res = await fetch(`${API_BASE}/accounts/batch-delete`, {
@@ -506,7 +517,7 @@ async function batchDeleteAccounts() {
             updateBatchActions();
             document.getElementById('select-all').checked = false;
             loadAccounts();
-            showToast(`已删除 ${result.deleted} 个账号`, 'success');
+            showToast(`已删除 ${result.deleted} 个邮箱`, 'success');
         }
     } catch (e) {
         showToast('删除失败', 'error');
@@ -772,7 +783,9 @@ async function openMail(messageId) {
 }
 
 async function deleteCurrentMail() {
-    if (!currentMailId || !confirm('确定删除此邮件？')) return;
+    if (!currentMailId) return;
+    const confirmed = await showConfirm('确定删除此邮件？', '删除邮件');
+    if (!confirmed) return;
 
     try {
         const res = await fetch(`${API_BASE}/accounts/${currentMailAccount}/messages/${currentMailId}`, {
@@ -796,6 +809,35 @@ function openModal(id) {
 
 function closeModal(id) {
     document.getElementById(id).classList.add('hidden');
+}
+
+// Custom confirm dialog
+let confirmResolve = null;
+
+function showConfirm(message, title = '确认操作') {
+    return new Promise((resolve) => {
+        confirmResolve = resolve;
+        document.getElementById('confirm-title').textContent = title;
+        document.getElementById('confirm-message').textContent = message;
+        openModal('confirm-modal');
+    });
+}
+
+function setupConfirmDialog() {
+    document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+        closeModal('confirm-modal');
+        if (confirmResolve) {
+            confirmResolve(true);
+            confirmResolve = null;
+        }
+    });
+    document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+        closeModal('confirm-modal');
+        if (confirmResolve) {
+            confirmResolve(false);
+            confirmResolve = null;
+        }
+    });
 }
 
 function showToast(message, type = '') {

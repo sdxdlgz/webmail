@@ -678,17 +678,37 @@ tbody tr:last-child td {
 }
 
 .modal-content form,
-.groups-content {
+.groups-content,
+.verify-content {
     padding: 24px;
+    padding-bottom: 0;
 }
 
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    padding-top: 20px;
+    padding: 20px 24px;
     border-top: 1px solid var(--border-color);
-    margin-top: 20px;
+    margin-top: 0;
+    background: var(--bg-color);
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* Confirm Dialog */
+.modal-small {
+    max-width: 400px;
+}
+
+.confirm-content {
+    padding: 24px;
+    text-align: center;
+}
+
+.confirm-content p {
+    font-size: 16px;
+    color: var(--text-color);
+    margin: 0;
 }
 
 /* Groups List */

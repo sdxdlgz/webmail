@@ -77,7 +77,7 @@
                             <tr>
                                 <th><input type="checkbox" id="select-all"></th>
                                 <th>邮箱</th>
-                                <th>Client ID</th>
+                                <th>备注</th>
                                 <th>分组</th>
                                 <th>状态</th>
                                 <th>最后验证</th>
@@ -158,6 +158,10 @@
                     <div class="form-group">
                         <label for="acc-group">分组</label>
                         <select id="acc-group" class="select-input"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="acc-remark">备注</label>
+                        <input type="text" id="acc-remark" placeholder="可选，添加备注信息">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary close-btn">取消</button>
@@ -242,6 +246,10 @@
                         <label for="edit-acc-group">分组</label>
                         <select id="edit-acc-group" class="select-input"></select>
                     </div>
+                    <div class="form-group">
+                        <label for="edit-acc-remark">备注</label>
+                        <input type="text" id="edit-acc-remark" placeholder="可选，添加备注信息">
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary close-btn">取消</button>
                         <button type="submit" class="btn btn-primary">保存</button>
@@ -306,6 +314,25 @@
                     </div>
                     <p id="verify-status">正在验证...</p>
                     <div id="verify-results" class="verify-results"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-btn">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Dialog Modal -->
+        <div id="confirm-modal" class="modal hidden">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h2 id="confirm-title">确认操作</h2>
+                </div>
+                <div class="confirm-content">
+                    <p id="confirm-message">确定要执行此操作吗？</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="confirm-cancel-btn">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirm-ok-btn">确定</button>
                 </div>
             </div>
         </div>

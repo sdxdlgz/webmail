@@ -24,6 +24,7 @@ class AccountCreate(BaseModel):
     refresh_token: str = Field(min_length=1)
     client_id: str = Field(min_length=1, max_length=128)
     group_id: Optional[str] = None
+    remark: Optional[str] = Field(default=None, max_length=256)
 
 
 class AccountUpdate(BaseModel):
@@ -32,6 +33,7 @@ class AccountUpdate(BaseModel):
     refresh_token: Optional[str] = None
     client_id: Optional[str] = Field(default=None, max_length=128)
     group_id: Optional[str] = None
+    remark: Optional[str] = Field(default=None, max_length=256)
 
 
 class AccountOut(BaseModel):
@@ -39,6 +41,7 @@ class AccountOut(BaseModel):
     email: str
     client_id: str
     group_id: Optional[str] = None
+    remark: Optional[str] = None
     status: str = "unknown"
     last_verified: Optional[str] = None
     created_at: str
