@@ -10,6 +10,8 @@ let currentMailAccount = null;
 let currentFolder = 'inbox';
 let currentMailPage = 0;
 const MAIL_PAGE_SIZE = 50;
+let importMode = 'text';
+let importFileContent = '';
 
 // DOM Elements
 const loginPage = document.getElementById('login-page');
@@ -374,8 +376,21 @@ async function addAccount(e) {
 async function batchImport(e) {
     e.preventDefault();
 
+    // Get data from either text mode or file mode
+    let importData = '';
+    if (importMode === 'file' && importFileContent) {
+        importData = importFileContent;
+    } else {
+        importData = document.getElementById('import-data').value;
+    }
+
+    if (!importData.trim()) {
+        showToast('请输入或上传导入数据', 'error');
+        return;
+    }
+
     const data = {
-        data: document.getElementById('import-data').value,
+        data: importData,
         group_id: document.getElementById('import-group').value || null
     };
 
@@ -390,6 +405,7 @@ async function batchImport(e) {
             const result = await res.json();
             closeModal('batch-import-modal');
             e.target.reset();
+            clearImportFile();
             loadAccounts();
             showToast(`导入成功: ${result.imported} 个, 跳过: ${result.skipped} 个, 错误: ${result.errors} 个`, 'success');
         } else {
@@ -579,20 +595,19 @@ async function exportAccounts() {
 // Mail Functions
 function populateMailAccountSelect() {
     const container = document.getElementById('account-list');
-    const activeAccounts = accounts.filter(a => a.status === 'active' || a.status === 'unknown');
 
-    if (activeAccounts.length === 0) {
+    if (accounts.length === 0) {
         container.innerHTML = `
             <div class="empty-state" style="padding: 20px;">
-                <p>暂无可用账号</p>
-                <p style="font-size: 12px; margin-top: 8px;">请先添加账号并测活</p>
+                <p>暂无可用邮箱</p>
+                <p style="font-size: 12px; margin-top: 8px;">请先添加邮箱</p>
             </div>
         `;
         return;
     }
 
-    container.innerHTML = activeAccounts.map(a => {
-        const statusText = a.status === 'active' ? '有效' : '未验证';
+    container.innerHTML = accounts.map(a => {
+        const statusText = { active: '有效', invalid: '失效', unknown: '未验证' }[a.status] || '未知';
         const isActive = currentMailAccount === a.id;
         return `
             <div class="account-item ${isActive ? 'active' : ''}" onclick="selectMailAccount('${a.id}')">
@@ -828,9 +843,6 @@ window.openMail = openMail;
 window.goToPage = goToPage;
 
 // Import Tabs Setup
-let importMode = 'text';
-let importFileContent = '';
-
 function setupImportTabs() {
     const tabs = document.querySelectorAll('.import-tab');
     const textMode = document.getElementById('import-text-mode');
