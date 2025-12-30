@@ -401,10 +401,10 @@ tbody tr:last-child td {
 }
 
 .mail-sidebar {
-    width: 300px;
+    width: 280px;
     background: var(--card-bg);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 16px;
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
@@ -412,10 +412,10 @@ tbody tr:last-child td {
 }
 
 .mail-sidebar h3 {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-secondary);
-    margin-bottom: 12px;
-    margin-top: 20px;
+    margin-bottom: 8px;
+    margin-top: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
     font-weight: 600;
@@ -425,22 +425,23 @@ tbody tr:last-child td {
     margin-top: 0;
 }
 
-/* Account List - 改进的账号选择区域 */
+/* Account List - 紧凑的账号选择区域 */
 .account-list-container {
-    flex: 1;
+    max-height: 100px;
     overflow-y: auto;
     margin: -4px;
     padding: 4px;
+    flex-shrink: 0;
 }
 
 .account-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .account-item {
-    padding: 12px 16px;
+    padding: 8px 12px;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -461,18 +462,20 @@ tbody tr:last-child td {
 
 .account-item-email {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-color);
-    word-break: break-all;
-    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .account-item-status {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
+    gap: 6px;
+    font-size: 11px;
     color: var(--text-secondary);
+    margin-top: 2px;
 }
 
 .account-item-unread {
@@ -484,19 +487,27 @@ tbody tr:last-child td {
     font-weight: 600;
 }
 
+/* Folder List - 紧凑的文件夹列表 */
+.folder-list-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
 .folder-list {
     list-style: none;
 }
 
 .folder-list li {
-    padding: 10px 14px;
+    padding: 8px 12px;
     cursor: pointer;
     border-radius: var(--radius-sm);
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: all 0.2s ease;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    font-size: 14px;
 }
 
 .folder-list li:hover {
@@ -510,12 +521,19 @@ tbody tr:last-child td {
 }
 
 .folder-count {
-    font-size: 12px;
+    font-size: 11px;
     background: var(--primary-color);
     color: white;
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 10px;
     font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+}
+
+.folder-count.empty {
+    background: transparent;
+    color: var(--text-secondary);
 }
 
 .mail-main {
@@ -546,18 +564,37 @@ tbody tr:last-child td {
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s ease;
+    background: var(--card-bg);
 }
 
 .mail-item:hover {
     background: var(--primary-light);
 }
 
+/* 未读邮件 - 蓝色左边框 + 浅蓝背景 */
 .mail-item.unread {
     background: linear-gradient(90deg, var(--primary-color) 3px, #f0f8ff 3px);
 }
 
+.mail-item.unread .mail-item-from,
 .mail-item.unread .mail-item-subject {
     font-weight: 700;
+    color: var(--text-color);
+}
+
+/* 已读邮件 - 白色背景 */
+.mail-item.read {
+    background: var(--card-bg);
+}
+
+.mail-item.read .mail-item-from {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.mail-item.read .mail-item-subject {
+    font-weight: 400;
+    color: var(--text-secondary);
 }
 
 .mail-item-header {
