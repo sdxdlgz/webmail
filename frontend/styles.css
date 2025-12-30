@@ -425,13 +425,19 @@ tbody tr:last-child td {
     margin-top: 0;
 }
 
-/* Account List - 紧凑的账号选择区域 */
+/* Account List - 账号选择区域 */
 .account-list-container {
-    max-height: 100px;
+    max-height: 200px;
     overflow-y: auto;
     margin: -4px;
     padding: 4px;
     flex-shrink: 0;
+}
+
+.mail-group-filter {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
 }
 
 .account-list {
@@ -485,6 +491,14 @@ tbody tr:last-child td {
     border-radius: 10px;
     font-size: 11px;
     font-weight: 600;
+}
+
+.account-item-group {
+    font-size: 10px;
+    color: var(--text-secondary);
+    background: var(--bg-color);
+    padding: 1px 6px;
+    border-radius: 4px;
 }
 
 /* Folder List - 紧凑的文件夹列表 */

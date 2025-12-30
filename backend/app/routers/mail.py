@@ -221,6 +221,13 @@ async def get_message_detail(
 
     try:
         detail = await graph.get_message_detail(access_token, message_id)
+        # Mark message as read if it's not already read
+        if not detail.get("is_read", False):
+            try:
+                await graph.mark_message_as_read(access_token, message_id)
+                detail["is_read"] = True
+            except GraphAPIError:
+                pass  # Ignore errors when marking as read
         return MailDetail(**detail)
     except GraphAPIError as e:
         raise HTTPException(status_code=e.status_code or 500, detail=str(e))

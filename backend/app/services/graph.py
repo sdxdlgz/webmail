@@ -259,3 +259,19 @@ async def get_unread_count(access_token: str, folder: str = "inbox") -> int:
 
     data = response.json()
     return data.get("unreadItemCount", 0)
+
+
+async def mark_message_as_read(access_token: str, message_id: str) -> None:
+    """Mark a message as read."""
+    response = await _make_graph_request(
+        "PATCH",
+        f"/me/messages/{message_id}",
+        access_token,
+        json_data={"isRead": True},
+    )
+
+    if response.status_code == 404:
+        raise GraphAPIError("Message not found", 404, "ItemNotFound")
+
+    if response.status_code not in (200, 204):
+        raise GraphAPIError(f"Failed to mark message as read: {response.text}", response.status_code)
