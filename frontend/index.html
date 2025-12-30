@@ -176,8 +176,30 @@
                 </div>
                 <form id="batch-import-form">
                     <div class="form-group">
+                        <label>导入方式</label>
+                        <div class="import-tabs">
+                            <button type="button" class="import-tab active" data-mode="text">粘贴文本</button>
+                            <button type="button" class="import-tab" data-mode="file">上传文件</button>
+                        </div>
+                    </div>
+                    <div id="import-text-mode" class="form-group">
                         <label>格式: 邮箱----密码----refresh_token----client_id</label>
-                        <textarea id="import-data" rows="10" placeholder="每行一个账号..." required></textarea>
+                        <textarea id="import-data" rows="10" placeholder="每行一个账号..."></textarea>
+                    </div>
+                    <div id="import-file-mode" class="form-group hidden">
+                        <label>选择 TXT 文件</label>
+                        <div class="file-upload-area" id="file-upload-area">
+                            <input type="file" id="import-file" accept=".txt" style="display: none;">
+                            <div class="file-upload-content">
+                                <p class="file-upload-icon">📄</p>
+                                <p>点击选择文件或拖拽文件到此处</p>
+                                <p class="file-upload-hint">支持 .txt 文件</p>
+                            </div>
+                            <div id="file-selected" class="file-selected hidden">
+                                <span id="file-name"></span>
+                                <button type="button" class="btn btn-small btn-secondary" id="clear-file">清除</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="import-group">导入到分组</label>
