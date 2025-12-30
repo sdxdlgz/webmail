@@ -96,13 +96,17 @@ function setupEventListeners() {
 
     // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             btn.classList.add('active');
             document.getElementById(`${btn.dataset.tab}-tab`).classList.remove('hidden');
 
             if (btn.dataset.tab === 'mail') {
+                // Ensure accounts are loaded before populating
+                if (accounts.length === 0) {
+                    await loadAccounts();
+                }
                 populateMailAccountSelect();
             }
         });
@@ -153,19 +157,19 @@ function setupEventListeners() {
     document.getElementById('mail-search').addEventListener('input', debounce(loadMails, 300));
     document.getElementById('refresh-mail-btn').addEventListener('click', loadMails);
 
-    // Modal Close
-    document.querySelectorAll('.modal .close-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            btn.closest('.modal').classList.add('hidden');
-        });
-    });
-
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+    // Modal Close - use event delegation for reliability
+    document.addEventListener('click', (e) => {
+        // Close button clicked
+        if (e.target.classList.contains('close-btn')) {
+            const modal = e.target.closest('.modal');
+            if (modal) {
                 modal.classList.add('hidden');
             }
-        });
+        }
+        // Click on modal backdrop
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.add('hidden');
+        }
     });
 
     // Delete Mail
