@@ -104,13 +104,10 @@ body {
     height: 28px;
 }
 
-.selected-count {
-    padding: 6px 12px;
-    background: var(--primary-color);
-    color: white;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 500;
+.batch-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 }
 
 /* Toolbar Row Layout */
@@ -121,10 +118,6 @@ body {
     flex-wrap: wrap;
     gap: 12px;
     width: 100%;
-}
-
-.toolbar-row + .toolbar-row {
-    margin-top: 12px;
 }
 
 /* Forms */
