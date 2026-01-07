@@ -292,11 +292,8 @@ textarea:focus,
 /* Toolbar */
 .toolbar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 12px;
     padding: 16px 20px;
     background: var(--card-bg);
     border-radius: var(--radius);
