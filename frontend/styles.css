@@ -175,6 +175,10 @@ textarea:focus,
     width: 300px;
 }
 
+.toolbar .toolbar-left .search-input {
+    width: 300px;
+}
+
 .input-group {
     display: flex;
     gap: 8px;
