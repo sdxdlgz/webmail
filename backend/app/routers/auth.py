@@ -295,7 +295,7 @@ def update_user(
     }
 
 
-@router.delete("/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/admin/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_user(
     user_id: str,
     store: JSONStore = Depends(get_store),

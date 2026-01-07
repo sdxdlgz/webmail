@@ -87,6 +87,11 @@ class BatchDeleteRequest(BaseModel):
     ids: List[str] = Field(min_items=1)
 
 
+class BatchGroupRequest(BaseModel):
+    ids: List[str] = Field(min_items=1)
+    group_id: Optional[str] = None  # None means remove from group
+
+
 # Group models
 class GroupCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64)

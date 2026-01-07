@@ -14,6 +14,7 @@ from ..models import (
     AccountOut,
     AccountUpdate,
     BatchDeleteRequest,
+    BatchGroupRequest,
     BatchImportRequest,
     GroupCreate,
     GroupOut,
@@ -275,7 +276,7 @@ def update_account(
     return account_to_out(account)
 
 
-@router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_account(
     account_id: str,
     store: JSONStore = Depends(get_store),
@@ -313,6 +314,34 @@ def batch_delete_accounts(
 
     store.update(_mutator)
     return {"deleted": deleted_count}
+
+
+@router.post("/accounts/batch-group", response_model=Dict[str, int])
+def batch_group_accounts(
+    payload: BatchGroupRequest,
+    store: JSONStore = Depends(get_store),
+    current_user: Dict = Depends(get_current_user),
+) -> Dict[str, int]:
+    user_id = current_user["id"]
+    ids_to_update = set(payload.ids)
+    updated_count = 0
+
+    def _mutator(data: Dict[str, Any]) -> None:
+        nonlocal updated_count
+
+        # Validate group if provided (must belong to user)
+        if payload.group_id:
+            groups = data.get("groups", [])
+            if not any(g.get("id") == payload.group_id and g.get("owner_id") == user_id for g in groups):
+                raise HTTPException(status_code=400, detail="Group not found")
+
+        for account in data.get("accounts", []):
+            if account.get("id") in ids_to_update and account.get("owner_id") == user_id:
+                account["group_id"] = payload.group_id
+                updated_count += 1
+
+    store.update(_mutator)
+    return {"updated": updated_count}
 
 
 @router.get("/accounts/export", response_class=PlainTextResponse)
@@ -385,7 +414,7 @@ def create_group(
     return GroupOut(id=group["id"], name=group["name"])
 
 
-@router.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def delete_group(
     group_id: str,
     store: JSONStore = Depends(get_store),
