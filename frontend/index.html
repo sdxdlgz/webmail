@@ -100,6 +100,12 @@
                         <button id="manage-groups-btn" class="btn btn-secondary">分组管理</button>
                     </div>
                 </div>
+                <!-- Batch Actions Bar -->
+                <div id="batch-actions" class="batch-actions-bar hidden">
+                    <span id="selected-count" class="selected-count">已选择 0 项</span>
+                    <button id="batch-move-group-btn" class="btn btn-secondary">批量改组</button>
+                    <button id="batch-delete-btn" class="btn btn-danger">批量删除</button>
+                </div>
 
                 <!-- Accounts Table -->
                 <div class="table-container">
@@ -117,13 +123,6 @@
                         </thead>
                         <tbody id="accounts-tbody"></tbody>
                     </table>
-                </div>
-
-                <!-- Batch Actions -->
-                <div id="batch-actions" class="batch-actions hidden">
-                    <span id="selected-count">已选择 0 项</span>
-                    <button id="batch-move-group-btn" class="btn btn-secondary">批量改组</button>
-                    <button id="batch-delete-btn" class="btn btn-danger">批量删除</button>
                 </div>
             </div>
 

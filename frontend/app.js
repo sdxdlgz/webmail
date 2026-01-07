@@ -497,10 +497,7 @@ function renderAccountsTable() {
                 <td>${lastVerified}</td>
                 <td>
                     <button class="btn btn-secondary btn-small btn-icon" onclick="gotoMailAccount('${a.id}')" title="查看邮件">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                     </button>
                     <button class="btn btn-secondary btn-small" onclick="verifyAccount('${a.id}')">测活</button>
                     <button class="btn btn-secondary btn-small" onclick="editAccount('${a.id}')">编辑</button>
