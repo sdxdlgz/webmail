@@ -265,6 +265,10 @@ function setupEventListeners() {
     // Batch Delete
     document.getElementById('batch-delete-btn').addEventListener('click', batchDeleteAccounts);
 
+    // Batch Move Group
+    document.getElementById('batch-move-group-btn').addEventListener('click', openBatchGroupModal);
+    document.getElementById('batch-group-confirm-btn').addEventListener('click', batchMoveGroup);
+
     // Forms
     document.getElementById('add-account-form').addEventListener('submit', addAccount);
     document.getElementById('batch-import-form').addEventListener('submit', batchImport);
@@ -352,7 +356,7 @@ async function loadGroups() {
 }
 
 function populateGroupSelects() {
-    const selects = ['group-filter', 'acc-group', 'import-group', 'edit-acc-group', 'mail-group-filter'];
+    const selects = ['group-filter', 'acc-group', 'import-group', 'edit-acc-group', 'mail-group-filter', 'batch-target-group'];
     selects.forEach(id => {
         const select = document.getElementById(id);
         if (!select) return;
@@ -440,7 +444,23 @@ async function loadAccounts() {
         const res = await fetch(`${API_BASE}/accounts?${params}`, { credentials: 'include' });
         if (res.ok) {
             accounts = await res.json();
+
+            // Trim selectedAccountIds to only include accounts in current list
+            const currentIds = new Set(accounts.map(a => a.id));
+            selectedAccountIds = new Set([...selectedAccountIds].filter(id => currentIds.has(id)));
+
             renderAccountsTable();
+
+            // Update select-all checkbox state
+            const selectAll = document.getElementById('select-all');
+            if (selectAll) {
+                const total = accounts.length;
+                const selected = selectedAccountIds.size;
+                selectAll.checked = total > 0 && selected === total;
+                selectAll.indeterminate = selected > 0 && selected < total;
+            }
+
+            updateBatchActions();
         }
     } catch (e) {
         console.error('Failed to load accounts:', e);
@@ -476,6 +496,12 @@ function renderAccountsTable() {
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                 <td>${lastVerified}</td>
                 <td>
+                    <button class="btn btn-secondary btn-small btn-icon" onclick="gotoMailAccount('${a.id}')" title="查看邮件">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                    </button>
                     <button class="btn btn-secondary btn-small" onclick="verifyAccount('${a.id}')">测活</button>
                     <button class="btn btn-secondary btn-small" onclick="editAccount('${a.id}')">编辑</button>
                     <button class="btn btn-danger btn-small" onclick="deleteAccount('${a.id}')">删除</button>
@@ -492,6 +518,30 @@ function toggleSelect(id) {
         selectedAccountIds.add(id);
     }
     updateBatchActions();
+}
+
+function gotoMailAccount(accountId) {
+    // Find the account
+    const account = accounts.find(a => a.id === accountId);
+    if (!account) return;
+
+    // Switch to mail tab
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    const mailBtn = document.querySelector('.tab-btn[data-tab="mail"]');
+    if (mailBtn) mailBtn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+    const mailTab = document.getElementById('mail-tab');
+    if (mailTab) mailTab.classList.remove('hidden');
+
+    // Set group filter to match account's group (or all groups)
+    const groupFilter = document.getElementById('mail-group-filter');
+    if (groupFilter) {
+        groupFilter.value = account.group_id || '';
+        populateMailAccountSelect();
+    }
+
+    // Select the account
+    selectMailAccount(accountId);
 }
 
 function updateBatchActions() {
@@ -679,6 +729,42 @@ async function batchDeleteAccounts() {
         }
     } catch (e) {
         showToast('删除失败', 'error');
+    }
+}
+
+function openBatchGroupModal() {
+    if (selectedAccountIds.size === 0) {
+        showToast('请先选择邮箱', 'error');
+        return;
+    }
+    document.getElementById('batch-target-group').value = '';
+    openModal('batch-group-modal');
+}
+
+async function batchMoveGroup() {
+    const groupId = document.getElementById('batch-target-group').value || null;
+
+    try {
+        const res = await fetch(`${API_BASE}/accounts/batch-group`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ ids: Array.from(selectedAccountIds), group_id: groupId })
+        });
+        if (res.ok) {
+            const result = await res.json();
+            closeModal('batch-group-modal');
+            selectedAccountIds.clear();
+            updateBatchActions();
+            document.getElementById('select-all').checked = false;
+            loadAccounts();
+            showToast(`已更新 ${result.updated} 个邮箱的分组`, 'success');
+        } else {
+            const err = await res.json();
+            showToast(err.detail || '操作失败', 'error');
+        }
+    } catch (e) {
+        showToast('网络错误', 'error');
     }
 }
 
@@ -1129,6 +1215,7 @@ window.selectFolder = selectFolder;
 window.selectMailAccount = selectMailAccount;
 window.openMail = openMail;
 window.goToPage = goToPage;
+window.gotoMailAccount = gotoMailAccount;
 
 // Import Tabs Setup
 function setupImportTabs() {
