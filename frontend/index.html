@@ -86,17 +86,6 @@
                             <select id="group-filter" class="select-input">
                                 <option value="">全部分组</option>
                             </select>
-                        </div>
-                        <div class="toolbar-right">
-                            <button id="add-account-btn" class="btn btn-primary">添加账号</button>
-                            <button id="batch-import-btn" class="btn btn-secondary">批量导入</button>
-                            <button id="batch-verify-btn" class="btn btn-secondary">批量测活</button>
-                            <button id="export-btn" class="btn btn-secondary">导出</button>
-                            <button id="manage-groups-btn" class="btn btn-secondary">分组管理</button>
-                        </div>
-                    </div>
-                    <div class="toolbar-row">
-                        <div class="toolbar-left">
                             <select id="status-filter" class="select-input">
                                 <option value="">全部状态</option>
                                 <option value="active">有效</option>
@@ -104,10 +93,17 @@
                                 <option value="unknown">未知</option>
                             </select>
                         </div>
-                        <div id="batch-actions" class="toolbar-right batch-actions hidden">
-                            <span id="selected-count" class="selected-count">已选择 0 项</span>
-                            <button id="batch-move-group-btn" class="btn btn-secondary">批量改组</button>
-                            <button id="batch-delete-btn" class="btn btn-danger">批量删除</button>
+                        <div class="toolbar-right">
+                            <button id="add-account-btn" class="btn btn-primary">添加账号</button>
+                            <button id="batch-import-btn" class="btn btn-secondary">批量导入</button>
+                            <button id="batch-verify-btn" class="btn btn-secondary">批量测活</button>
+                            <button id="export-btn" class="btn btn-secondary">导出</button>
+                            <button id="manage-groups-btn" class="btn btn-secondary">分组管理</button>
+                            <span id="batch-actions" class="batch-actions hidden">
+                                <span id="selected-count" class="btn btn-secondary">已选择 0 项</span>
+                                <button id="batch-move-group-btn" class="btn btn-secondary">批量改组</button>
+                                <button id="batch-delete-btn" class="btn btn-danger">批量删除</button>
+                            </span>
                         </div>
                     </div>
                 </div>
