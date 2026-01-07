@@ -86,12 +86,6 @@
                             <select id="group-filter" class="select-input">
                                 <option value="">全部分组</option>
                             </select>
-                            <select id="status-filter" class="select-input">
-                                <option value="">全部状态</option>
-                                <option value="active">有效</option>
-                                <option value="invalid">失效</option>
-                                <option value="unknown">未知</option>
-                            </select>
                         </div>
                         <div class="toolbar-right">
                             <button id="add-account-btn" class="btn btn-primary">添加账号</button>
@@ -101,8 +95,15 @@
                             <button id="manage-groups-btn" class="btn btn-secondary">分组管理</button>
                         </div>
                     </div>
-                    <div class="toolbar-row batch-row">
-                        <div class="toolbar-left"></div>
+                    <div class="toolbar-row">
+                        <div class="toolbar-left">
+                            <select id="status-filter" class="select-input">
+                                <option value="">全部状态</option>
+                                <option value="active">有效</option>
+                                <option value="invalid">失效</option>
+                                <option value="unknown">未知</option>
+                            </select>
+                        </div>
                         <div id="batch-actions" class="toolbar-right batch-actions invisible">
                             <span id="selected-count" class="btn btn-secondary">已选择 0 项</span>
                             <button id="batch-move-group-btn" class="btn btn-secondary">批量改组</button>
