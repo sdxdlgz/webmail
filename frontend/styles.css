@@ -164,11 +164,15 @@ textarea:focus,
 }
 
 .search-input {
-    width: 220px;
+    width: 300px;
     padding-left: 40px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23605e5c' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: 12px center;
+}
+
+.toolbar .toolbar-left .select-input {
+    width: 300px;
 }
 
 .input-group {
