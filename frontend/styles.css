@@ -113,14 +113,23 @@ body {
     font-weight: 500;
 }
 
-.batch-actions-bar {
+/* Toolbar Row Layout */
+.toolbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+}
+
+.batch-actions-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 20px;
-    background: #f0f4f8;
-    border-radius: var(--radius-sm);
-    margin-bottom: 20px;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px solid var(--border-color);
 }
 
 /* Forms */
@@ -287,11 +296,8 @@ textarea:focus,
 /* Toolbar */
 .toolbar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 12px;
     padding: 16px 20px;
     background: var(--card-bg);
     border-radius: var(--radius);

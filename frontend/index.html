@@ -80,31 +80,33 @@
             <div id="accounts-tab" class="tab-content active">
                 <!-- Toolbar -->
                 <div class="toolbar">
-                    <div class="toolbar-left">
-                        <input type="text" id="account-search" placeholder="搜索邮箱..." class="search-input">
-                        <select id="group-filter" class="select-input">
-                            <option value="">全部分组</option>
-                        </select>
-                        <select id="status-filter" class="select-input">
-                            <option value="">全部状态</option>
-                            <option value="active">有效</option>
-                            <option value="invalid">失效</option>
-                            <option value="unknown">未知</option>
-                        </select>
+                    <div class="toolbar-row">
+                        <div class="toolbar-left">
+                            <input type="text" id="account-search" placeholder="搜索邮箱..." class="search-input">
+                            <select id="group-filter" class="select-input">
+                                <option value="">全部分组</option>
+                            </select>
+                            <select id="status-filter" class="select-input">
+                                <option value="">全部状态</option>
+                                <option value="active">有效</option>
+                                <option value="invalid">失效</option>
+                                <option value="unknown">未知</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-right">
+                            <button id="add-account-btn" class="btn btn-primary">添加账号</button>
+                            <button id="batch-import-btn" class="btn btn-secondary">批量导入</button>
+                            <button id="batch-verify-btn" class="btn btn-secondary">批量测活</button>
+                            <button id="export-btn" class="btn btn-secondary">导出</button>
+                            <button id="manage-groups-btn" class="btn btn-secondary">分组管理</button>
+                        </div>
                     </div>
-                    <div class="toolbar-right">
-                        <button id="add-account-btn" class="btn btn-primary">添加账号</button>
-                        <button id="batch-import-btn" class="btn btn-secondary">批量导入</button>
-                        <button id="batch-verify-btn" class="btn btn-secondary">批量测活</button>
-                        <button id="export-btn" class="btn btn-secondary">导出</button>
-                        <button id="manage-groups-btn" class="btn btn-secondary">分组管理</button>
+                    <!-- Batch Actions Row (inside toolbar) -->
+                    <div id="batch-actions" class="toolbar-row batch-actions-row hidden">
+                        <span id="selected-count" class="selected-count">已选择 0 项</span>
+                        <button id="batch-move-group-btn" class="btn btn-secondary">批量改组</button>
+                        <button id="batch-delete-btn" class="btn btn-danger">批量删除</button>
                     </div>
-                </div>
-                <!-- Batch Actions Bar -->
-                <div id="batch-actions" class="batch-actions-bar hidden">
-                    <span id="selected-count" class="selected-count">已选择 0 项</span>
-                    <button id="batch-move-group-btn" class="btn btn-secondary">批量改组</button>
-                    <button id="batch-delete-btn" class="btn btn-danger">批量删除</button>
                 </div>
 
                 <!-- Accounts Table -->
@@ -198,11 +200,13 @@
                     <div class="admin-section">
                         <h3>用户管理</h3>
                         <div class="toolbar">
-                            <div class="toolbar-left">
-                                <input type="text" id="user-search" placeholder="搜索用户..." class="search-input">
-                            </div>
-                            <div class="toolbar-right">
-                                <button id="add-user-btn" class="btn btn-primary">添加用户</button>
+                            <div class="toolbar-row">
+                                <div class="toolbar-left">
+                                    <input type="text" id="user-search" placeholder="搜索用户..." class="search-input">
+                                </div>
+                                <div class="toolbar-right">
+                                    <button id="add-user-btn" class="btn btn-primary">添加用户</button>
+                                </div>
                             </div>
                         </div>
                         <div class="table-container">
