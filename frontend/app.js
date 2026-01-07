@@ -546,10 +546,10 @@ function updateBatchActions() {
     const selectedCount = document.getElementById('selected-count');
 
     if (selectedAccountIds.size > 0) {
-        batchActions.classList.remove('hidden');
+        batchActions.classList.remove('invisible');
         selectedCount.textContent = `已选择 ${selectedAccountIds.size} 项`;
     } else {
-        batchActions.classList.add('hidden');
+        batchActions.classList.add('invisible');
     }
 }
 

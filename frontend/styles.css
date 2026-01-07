@@ -105,9 +105,13 @@ body {
 }
 
 .batch-actions {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.batch-actions.invisible {
+    visibility: hidden;
 }
 
 /* Toolbar Row Layout */
@@ -118,6 +122,10 @@ body {
     flex-wrap: wrap;
     gap: 12px;
     width: 100%;
+}
+
+.toolbar-row + .toolbar-row {
+    margin-top: 12px;
 }
 
 /* Forms */
