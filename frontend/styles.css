@@ -87,6 +87,7 @@ body {
 .btn-small {
     padding: 6px 12px;
     font-size: 12px;
+    height: 30px;
 }
 
 .btn-icon {
@@ -100,8 +101,8 @@ body {
 }
 
 .btn-small.btn-icon {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
 }
 
 .batch-actions {
