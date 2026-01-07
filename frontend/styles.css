@@ -90,13 +90,37 @@ body {
 }
 
 .btn-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     padding: 0;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: var(--radius-sm);
+}
+
+.btn-small.btn-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.selected-count {
+    padding: 6px 12px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.batch-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: #f0f4f8;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
 }
 
 /* Forms */
