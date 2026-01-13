@@ -143,8 +143,8 @@ body::after {
 }
 
 .btn-small.btn-icon {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
 }
 
 .batch-actions {
@@ -862,6 +862,22 @@ tbody tr:last-child td {
     color: var(--foreground);
 }
 
+/* Modal footer close button should use btn styles */
+.modal-footer .btn.close-btn {
+    background: transparent;
+    color: var(--secondary);
+    border: 2px solid var(--secondary);
+    width: auto;
+    height: 48px;
+    font-size: 14px;
+    border-radius: var(--radius-full);
+}
+
+.modal-footer .btn.close-btn:hover {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+}
+
 .modal-content form,
 .groups-content,
 .verify-content {
@@ -1135,6 +1151,20 @@ input[type="checkbox"] {
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 36px;
+}
+
+/* Custom select dropdown styling */
+.select-input option {
+    background: var(--card-bg);
+    color: var(--foreground);
+    padding: 12px 16px;
+}
+
+.select-input option:hover,
+.select-input option:focus,
+.select-input option:checked {
+    background: var(--accent);
+    color: var(--primary);
 }
 
 /* Import Tabs */
