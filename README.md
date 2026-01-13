@@ -218,7 +218,8 @@ sudo certbot --nginx -d your-domain.com
 ## 技术栈
 
 - **后端**: Python 3.11 + FastAPI + Uvicorn
-- **前端**: 原生 HTML/CSS/JavaScript
+- **前端**: 原生 HTML/CSS/JavaScript，Organic/Natural 设计风格
+- **字体**: Fraunces (标题) + Nunito (正文)
 - **存储**: JSON 文件
 - **API**: Microsoft Graph API
 - **容器**: Docker
